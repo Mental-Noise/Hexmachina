@@ -1,4 +1,5 @@
 # Hexmachina
 Raspberry Pico based MIDI controller.
 
-WIP
+# Work in progress
+Software and hardware are currently untested.
