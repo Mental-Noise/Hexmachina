@@ -14,22 +14,10 @@ midi = adafruit_midi.MIDI(midi_out=usb_midi.ports[1])
 i2c = busio.I2C(sda=board.GP0, scl=board.GP1)
 
 leds = [
-    LED(board.GP27),
-    LED(board.GP26),
-    LED(board.GP2),
-    LED(board.GP3),
-    LED(board.GP15),
-    LED(board.GP14),
-    LED(board.GP4),
-    LED(board.GP5),
-    LED(board.GP10),
-    LED(board.GP11),
-    LED(board.GP6),
-    LED(board.GP7),
-    LED(board.GP12),
-    LED(board.GP13),
-    LED(board.GP8),
-    LED(board.GP9),
+    LED(board.GP27), LED(board.GP26), LED(board.GP2), LED(board.GP3),
+    LED(board.GP15), LED(board.GP14), LED(board.GP4), LED(board.GP5),
+    LED(board.GP10), LED(board.GP11), LED(board.GP6), LED(board.GP7),
+    LED(board.GP12), LED(board.GP13), LED(board.GP8), LED(board.GP9),
 ]
 
 ads = [
@@ -67,7 +55,7 @@ ccs_core1 = [
     ControlChange(35, midi, ads[3], ads1015.P3, leds[15]),
 ]
 
-# Startup animation
+# Boot animation
 i = 1
 start = time.time()
 finished = False
