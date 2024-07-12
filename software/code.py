@@ -1,14 +1,13 @@
 import adafruit_midi
+import asyncio
 import board
 import busio
-import time
 import usb_midi
-import _thread
 
 from adafruit_ads1x15 import ads1015
 from control_change import ControlChange
 from led import LED
-
+from software.calibration import Calibration
 
 midi = adafruit_midi.MIDI(midi_out=usb_midi.ports[1])
 i2c = busio.I2C(sda=board.GP0, scl=board.GP1)
@@ -55,41 +54,22 @@ ccs_core1 = [
     ControlChange(35, midi, ads[3], ads1015.P3, leds[15]),
 ]
 
-# Boot animation
-i = 1
-start = time.time()
-finished = False
-
-while True:
-    for led in leds[:i]:
-        finished = led.next_animation_frame()
-
-    time.sleep(0.001)
-
-    now = time.time()
-
-    if now - start > 1000 and i < 17:
-        i = i + 1
-        start = now
-
-    if finished:
-        time.sleep(1)
-        break
+calibration = Calibration(ccs_core0 + ccs_core1, leds)
 
 
-# Core 0 handles ADS 1 and 2
-def core0_main():
+async def handle_ccs(ccs: list[ControlChange], calibration_data):
     while True:
-        for cc0 in ccs_core0:
-            cc0.handle()
+        for index, cc in enumerate(ccs):
+            await cc.handle(calibration_data[index])
 
 
-# Core 1 handles ADS 3 and 4
-def core1_main():
-    while True:
-        for cc1 in ccs_core1:
-            cc1.handle()
+async def main():
+    await LED.animate_leds(leds)
+    await calibration.start()
+    task1 = asyncio.create_task(handle_ccs(ccs_core0, calibration.data))
+    task2 = asyncio.create_task(handle_ccs(ccs_core1, calibration.data))
+    await asyncio.gather(task1, task2)
 
 
-_thread.start_new_thread(core0_main, ())
-core1_main()
+# Run the main function
+asyncio.run(main())

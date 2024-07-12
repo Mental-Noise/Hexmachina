@@ -1,3 +1,6 @@
+import asyncio
+from calendar import prcal
+
 from adafruit_ads1x15.ads1015 import ADS1015
 from adafruit_ads1x15.analog_in import AnalogIn
 from adafruit_midi import MIDI
@@ -6,7 +9,6 @@ from led import LED
 
 
 class ControlChange:
-    MAX_VALUE = 27400
     CHANGE_THRESHOLD = 50
 
     def __init__(self, cc: int, midi: MIDI, ads: ADS1015, ads_pin: int, led: LED):
@@ -18,21 +20,27 @@ class ControlChange:
         self.last_value = 0
         self.last_cc_value = 0
 
-    def handle(self):
-        value = self.chan.value
+    @property
+    def value(self):
+        return self.chan.value
+
+    async def handle(self, calibration_data):
+        value = self.value
 
         if abs(value - self.last_value) < ControlChange.CHANGE_THRESHOLD:
             return
 
         self.last_value = value
-        self.set_led_brightness(value)
-        self.send_midi_cc(value)
+        self.set_led_brightness(value, calibration_data.min, calibration_data.max)
+        self.send_midi_cc(value, calibration_data.min, calibration_data.max)
 
-    def set_led_brightness(self, value):
-        self.led.pwm.duty_cycle = ControlChange.map(value, 0, ControlChange.MAX_VALUE, 0, 65535);
+        await asyncio.sleep(0.0001)
 
-    def send_midi_cc(self, value):
-        cc_value = ControlChange.map(value, 0, ControlChange.MAX_VALUE, 0, 127)
+    def set_led_brightness(self, value, min_value, max_value):
+        self.led.pwm.duty_cycle = ControlChange.map(value, min_value, max_value, 0, 65535)
+
+    def send_midi_cc(self, value,  min_value, max_value):
+        cc_value = ControlChange.map(value,  min_value, max_value, 0, 127)
 
         if cc_value == self.last_cc_value:
             return
